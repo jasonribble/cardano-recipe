@@ -1,5 +1,7 @@
 # Cardano Recipe
 
+## Requirements
+
 ## Step 1a. Start block producer server
 
 Go to Digital Ocean. We are creating 2 droplets, one relay, one block producer. We will first start creating the block producer.
@@ -10,7 +12,7 @@ OS: Ubuntun 20.04 (LTS) x64
 
 Once the nodes are stared, update the server
 
-## Step 1b. Harden server basics
+## Step 1b. Harden server
 
 ### Add user
 
@@ -78,6 +80,11 @@ sudo apt-get install unattended-upgrades
 sudo dpkg-reconfigure -plow unattended-upgrades
 ```
 
+Install useful things
+```
+sudo apt-get install net-tools tree
+```
+
 Disable root:
 
 ```
@@ -124,7 +131,7 @@ port = INSERT_YOUR_SSH_PORT_NUMBER_HERE
 filter = sshd
 logpath = /var/log/auth.log
 maxretry = 3
-# whitelisted IP addresses
+# whitelisted IP addresses. For instance, a single IP address from a VPN end point.
 # ignoreip = INSERT_A_SAFE_IP_HERE_IF_DESIRED
 ```
 
@@ -134,9 +141,10 @@ For ignoreip, if there is a specific IP address that is used, remove the # (comm
 ignoreip = 127.0.0.1
 ```
 
-Restart fail2ban for setting to take effect
+Enbale and Restart fail2ban for setting to take effect
 
 ```
+sudo systemctl enable fail2ban
 sudo systemctl restart fail2ban
 ```
 
@@ -144,8 +152,8 @@ sudo systemctl restart fail2ban
 
 The standard UFW firewall can be used to control network access to your node.
 With any new installation, ufw is disabled by default. Enable it with the following settings.
-Port 22 (or your random port #) TCP for SSH connection
-Port 600 (or your random p2p port #) TCP for p2p traffic
+- Port 22 (or your random port #) TCP for SSH connection
+- Port 600 (or your random p2p port #) TCP for p2p traffic
 
 
 A) *Run this on your Block Producer only:*
@@ -176,7 +184,7 @@ ufw status numbered
 
 In order to protect your Relay Node(s) from a novel "DoS/Syn" attack, Michael Fazio created iptables entry which restricts connections to a given destination port to 5 connections from the same IP. 
 
-Replace <RELAY NODE PORT> with your public relay port, replace the 5 with your preferred connection limit.
+Replace <RELAY NODE PORT> with your public relay port. Opitonally, you can replace the 5 with your preferred connection limit.
 
 ```
 iptables -I INPUT -p tcp -m tcp --dport <RELAY NODE PORT> --tcp-flags FIN,SYN,RST,ACK SYN -m connlimit --connlimit-above 5 --connlimit-mask 32 --connlimit-saddr -j REJECT --reject-with tcp-reset
@@ -196,8 +204,8 @@ ss -tulpn
 
 We will open up ports for monitoring at a later time:
 
-Port 3000 TCP for Grafana web server (if hosted on current node)
-Port 9090 tcp for Prometheus export data (optional, if hosted on current node)
+- Port 3000 TCP for Grafana web server (if hosted on current node)
+- Port 9090 tcp for Prometheus export data (optional, if hosted on current node)
 
 ## Step 1b + 2b. Create Relay server
 
@@ -205,8 +213,7 @@ Follow the same steps as step 1a and 2a, except with a relay server.
 
 The only difference will be when setting up the firewall.
 
-## Step 3: Build cardano-node and cardono-cli
-
+## Step 3a: Get the Prereqs (with CNTools) 
 On both servers, run the prereqs scripts provided by CNTools. Make sure you have a tmux session 
 
 ```
@@ -228,7 +235,9 @@ Check the `$HOME/.bashrc` file to make sure enviroment variables are set properl
 echo $CNODE_HOME
 ```
 
-Once complete, we should have all the packages, we can build cardano-node
+## Step 3a: Install cardano-node (with CNTools) 
+
+Once complete, we should have all the packages, we can build cardano-node, cardano-cli and more.
 
 ```
 git fetch --tags --all
@@ -249,6 +258,19 @@ cardano-cli version
 cardano-node version
 # cardano-node 1.25.1 - linux-x86_64 - ghc-8.10
 # git rev 9a7331cce5e8bc0ea9c6bfa1c28773f4c5a7000f
+```
+
+In this tutorial, since we are importing the wallets, we want to confirm that bech32 and cardano-address are available in the proper path:
+
+```
+ls -l ~/.cabal/bin
+```
+
+If it is not there, remove the cardano-node repo and repeat step 3b:
+
+```
+cd ~/git
+rm -rf cardano-node
 ```
 
 Before you go ahead with starting your node, you may want to update values for CNODE_PORT in $CNODE_HOME/scripts/env. Note that it is imperative for operational relays and pools to ensure that the port mentioned is opened via firewall to the destination your node is supposed to connect from. Update your network/firewall configuration accordingly. Future executions of prereqs.sh will preserve and not overwrite these values.
@@ -272,7 +294,6 @@ It will ask also to set the topologyupdater process as systemd and you will:
 
 - Producer: press NO for topologyUpdater
 - Relay: press YES for topologyUpdater, let the default timer for cnode auto restart to 86400
-
 
 
 Start the servcie
@@ -371,61 +392,7 @@ sudo ufw allow proto tcp from any to any port RELAY_PORT
 
 Restart the node wait few minutes an check again with gliveview. The IP should appear in the Peers menu (press P)
 
-
-## Step 5: Create wallet and Register the Pool
-
-Alexd1985's recommendation is to create a new wallet for pool registration and transactions fees only, and pledge with an imported wallet (this way you will have control of your funds better). 
-
-Create a wallet named `rewards`
-
-```
-cd $CNODE_HOME
-./cntools.sh
-```
-
-Press W for the wallet command, then N for new wallte, and the put in the name as seen above.
-
-Then, Press W, next press I to import a new wallet, finally press M to input a mnemoic seed. Nmae this wallet `pledge`. You may get an error about `bech32`. If you do, re-run the prereq script and rebuild the node. Then confirm that the bech32 and cardano-address are in the ~/.cabal/bin folder. Here are the instructions:
-
-```
-cd "$HOME/tmp"
-curl -sS -o prereqs.sh https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/prereqs.sh
-chmod 755 prereqs.sh
-```
-
-```
-./prereqs.sh
-. "${HOME}/.bashrc"
-```
-
-Check the `$HOME/.bashrc` file to make sure enviroment variables are set properly. You can echo it on the command line to confirm as well
-
-```
-echo $CNODE_HOME
-```
-
-```
-cd ~/git
-rm -rf cardano-node
-git clone https://github.com/input-output-hk/cardano-node
-cd cardano-node
-```
-
-```
-git fetch --tags --all
-# Replace tag against checkout if you do not want to build the latest released version
-git pull
-git checkout $(curl -s https://api.github.com/repos/input-output-hk/cardano-node/releases/latest | jq -r .tag_name)
-
-$CNODE_HOME/scripts/cabal-build-all.sh -o
-```
-
-```
-cd ~/.cabal/bin
-ls -l
-```
-
-## Step 6: Create Pool Meta Data on Github.
+## Step 5: Create Pool Meta Data on Github.
 
 Create a github gist with the meta data. Here's the general format 
 
@@ -442,8 +409,17 @@ It is suggested to have it all in one line without space before each property. A
 
 Once you have a RAW Url from Github, put it in [Git.io](https://git.io) to shortent it. Save the URL for later. For example: https://git.io/JYTZj
 
+
+
+## Step 6: Create/Import wallet and Register the Pool
+
+Following CNTools [Offline Work](https://cardano-community.github.io/guild-operators/#/Scripts/cntools?id=offline-workflow),, we will keep our keys save with a hybrid pool creation of our wallet(s) and 
+
+<svg id="mermaid-svg-0" width="100%" xmlns="http://www.w3.org/2000/svg" height="884" style="max-width: 1389px;" viewBox="-316.5 -10 1389 884"><style>#mermaid-svg-0{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-0 .error-icon{fill:#552222;}#mermaid-svg-0 .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-0 .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-0 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-0 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-0 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-0 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-0 .marker{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .marker.cross{stroke:#42B983;}#mermaid-svg-0 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-0 .actor{stroke:hsl(78.1578947368,58.4615384615%,54.5098039216%);fill:#42B983;}#mermaid-svg-0 text.actor &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .actor-line{stroke:#42B983;}#mermaid-svg-0 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#42B983;}#mermaid-svg-0 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#42B983;}#mermaid-svg-0 #arrowhead path{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .sequenceNumber{fill:white;}#mermaid-svg-0 #sequencenumber{fill:#42B983;}#mermaid-svg-0 #crosshead path{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .messageText{fill:#d22778;stroke:#d22778;}#mermaid-svg-0 .labelBox{stroke:#326932;fill:#cde498;}#mermaid-svg-0 .labelText,#mermaid-svg-0 .labelText &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .loopText,#mermaid-svg-0 .loopText &gt; tspan{fill:#FFFFFF;stroke:none;}#mermaid-svg-0 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#326932;fill:#326932;}#mermaid-svg-0 .note{stroke:#000000;fill:#fff5ad;}#mermaid-svg-0 .noteText,#mermaid-svg-0 .noteText &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .activation0{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0 .activation1{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0 .activation2{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-0 sequence{fill:apa;}</style><g></g><g><line id="actor0" x1="75" y1="5" x2="75" y2="873" class="actor-line" stroke-width="0.5px" stroke="#999"></line><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="75" y="32.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="75" dy="0">Offline</tspan></text></g><g><line id="actor1" x1="710" y1="5" x2="710" y2="873" class="actor-line" stroke-width="0.5px" stroke="#999"></line><rect x="635" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="710" y="32.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="710" dy="0">Online</tspan></text></g><defs><marker id="arrowhead" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="16" refY="4"><path fill="black" stroke="#000000" style="stroke-dasharray: 0px, 0px;" stroke-width="1px" d="M 9,2 V 6 L16,4 Z"></path><path fill="none" stroke="#000000" style="stroke-dasharray: 0px, 0px;" stroke-width="1px" d="M 0,1 L 6,7 M 6,1 L 0,7"></path></marker></defs><defs><marker id="filled-head" refX="18" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><g><rect x="-30.5" y="75" fill="#EDF2AE" stroke="#666" width="211" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create/Import a wallet</tspan></text></g><g><rect x="-12.5" y="123" fill="#EDF2AE" stroke="#666" width="175" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="128" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create a new pool</tspan></text></g><g><rect x="-89" y="171" fill="#EDF2AE" stroke="#666" width="328" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Rotate KES keys to generate op.cert</tspan></text></g><g><rect x="-77" y="219" fill="#EDF2AE" stroke="#666" width="304" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="224" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create a backup w/o private keys</tspan></text></g><text x="393" y="272" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer backup to online node</text><line x1="75" y1="309" x2="710" y2="309" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="501" y="319" fill="#EDF2AE" stroke="#666" width="418" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="324" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Fund the wallet base address with enough Ada</tspan></text></g><g><rect x="459.5" y="367" fill="#EDF2AE" stroke="#666" width="501" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="372" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Register wallet using ' Wallet » Register ' in hybrid mode</tspan></text></g><text x="393" y="420" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer built tx file back to offline node</text><line x1="710" y1="457" x2="75" y2="457" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="-266.5" y="467" fill="#EDF2AE" stroke="#666" width="683" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="472" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Use ' Transaction &gt;&gt; Sign ' with payment.skey from wallet to sign transaction</tspan></text></g><text x="393" y="520" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer signed tx back to online node</text><line x1="75" y1="557" x2="710" y2="557" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="397.5" y="567" fill="#EDF2AE" stroke="#666" width="625" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="572" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Use ' Transaction &gt;&gt; Submit ' to send signed transaction to blockchain</tspan></text></g><g><rect x="577" y="615" fill="#EDF2AE" stroke="#666" width="266" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="620" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Register pool in hybrid mode</tspan></text></g><text x="393" y="693" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Repeat steps to sign and submit built pool registration transaction</text><line x1="75" y1="730" x2="710" y2="730" style="stroke-dasharray: 3px, 3px; fill: none;" class="messageLine1" stroke-width="2" stroke="none"></line><g><line x1="65" y1="663" x2="720" y2="663" class="loopLine"></line><line x1="720" y1="663" x2="720" y2="740" class="loopLine"></line><line x1="65" y1="740" x2="720" y2="740" class="loopLine"></line><line x1="65" y1="663" x2="65" y2="740" class="loopLine"></line><polygon points="65,663 115,663 115,676 106.6,683 65,683" class="labelBox"></polygon><text x="90" y="676" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="labelText">loop</text><text x="417.5" y="681" text-anchor="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="loopText"><tspan x="417.5"></tspan></text></g><g><rect x="431" y="750" fill="#EDF2AE" stroke="#666" width="558" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="755" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Verify that pool was successfully registered with ' Pool » Show '</tspan></text></g><g><rect x="0" y="808" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="75" y="840.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="75" dy="0">Offline</tspan></text></g><g><rect x="635" y="808" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="710" y="840.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="710" dy="0">Online</tspan></text></g></svg>
+
 ## Step 7: Create the Pool
 
+***THIS WILL BE ON THE OFFLINE DEVICE***
 
 Create the pool in CNTools. 
 
@@ -495,6 +471,7 @@ INFO: Total balance in 1 owner/pledge wallet(s) are: 2.434901 Ada
 ```
 
 
+
 ## Step 10 Start Producer as an actually Producer
 
 ```
@@ -509,6 +486,13 @@ POOL_NAME="test"
 ```
 
 Restart the node and confirm that it is in fact a CORE 
+
+*The CERTIFICATIONS and KES need to be rotated (once/ ~90 days); In order to do that you must go to: CNTOOLS - POOL - ROTATE; after this operation restart your Producer and now in gliveview you should see the new KES expiration date.*
+
+Step X - Securing Files
+
+## Currect Problem: 
+
 
 ## Resource Credit 
 
