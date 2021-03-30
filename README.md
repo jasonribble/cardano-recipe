@@ -417,9 +417,71 @@ Following CNTools [Offline Work](https://cardano-community.github.io/guild-opera
 
 <svg id="mermaid-svg-0" width="100%" xmlns="http://www.w3.org/2000/svg" height="884" style="max-width: 1389px;" viewBox="-316.5 -10 1389 884"><style>#mermaid-svg-0{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-0 .error-icon{fill:#552222;}#mermaid-svg-0 .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-0 .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-0 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-0 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-0 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-0 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-0 .marker{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .marker.cross{stroke:#42B983;}#mermaid-svg-0 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-0 .actor{stroke:hsl(78.1578947368,58.4615384615%,54.5098039216%);fill:#42B983;}#mermaid-svg-0 text.actor &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .actor-line{stroke:#42B983;}#mermaid-svg-0 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#42B983;}#mermaid-svg-0 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#42B983;}#mermaid-svg-0 #arrowhead path{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .sequenceNumber{fill:white;}#mermaid-svg-0 #sequencenumber{fill:#42B983;}#mermaid-svg-0 #crosshead path{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .messageText{fill:#d22778;stroke:#d22778;}#mermaid-svg-0 .labelBox{stroke:#326932;fill:#cde498;}#mermaid-svg-0 .labelText,#mermaid-svg-0 .labelText &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .loopText,#mermaid-svg-0 .loopText &gt; tspan{fill:#FFFFFF;stroke:none;}#mermaid-svg-0 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#326932;fill:#326932;}#mermaid-svg-0 .note{stroke:#000000;fill:#fff5ad;}#mermaid-svg-0 .noteText,#mermaid-svg-0 .noteText &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .activation0{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0 .activation1{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0 .activation2{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-0 sequence{fill:apa;}</style><g></g><g><line id="actor0" x1="75" y1="5" x2="75" y2="873" class="actor-line" stroke-width="0.5px" stroke="#999"></line><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="75" y="32.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="75" dy="0">Offline</tspan></text></g><g><line id="actor1" x1="710" y1="5" x2="710" y2="873" class="actor-line" stroke-width="0.5px" stroke="#999"></line><rect x="635" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="710" y="32.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="710" dy="0">Online</tspan></text></g><defs><marker id="arrowhead" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="16" refY="4"><path fill="black" stroke="#000000" style="stroke-dasharray: 0px, 0px;" stroke-width="1px" d="M 9,2 V 6 L16,4 Z"></path><path fill="none" stroke="#000000" style="stroke-dasharray: 0px, 0px;" stroke-width="1px" d="M 0,1 L 6,7 M 6,1 L 0,7"></path></marker></defs><defs><marker id="filled-head" refX="18" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><g><rect x="-30.5" y="75" fill="#EDF2AE" stroke="#666" width="211" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create/Import a wallet</tspan></text></g><g><rect x="-12.5" y="123" fill="#EDF2AE" stroke="#666" width="175" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="128" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create a new pool</tspan></text></g><g><rect x="-89" y="171" fill="#EDF2AE" stroke="#666" width="328" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Rotate KES keys to generate op.cert</tspan></text></g><g><rect x="-77" y="219" fill="#EDF2AE" stroke="#666" width="304" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="224" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create a backup w/o private keys</tspan></text></g><text x="393" y="272" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer backup to online node</text><line x1="75" y1="309" x2="710" y2="309" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="501" y="319" fill="#EDF2AE" stroke="#666" width="418" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="324" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Fund the wallet base address with enough Ada</tspan></text></g><g><rect x="459.5" y="367" fill="#EDF2AE" stroke="#666" width="501" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="372" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Register wallet using ' Wallet » Register ' in hybrid mode</tspan></text></g><text x="393" y="420" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer built tx file back to offline node</text><line x1="710" y1="457" x2="75" y2="457" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="-266.5" y="467" fill="#EDF2AE" stroke="#666" width="683" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="472" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Use ' Transaction &gt;&gt; Sign ' with payment.skey from wallet to sign transaction</tspan></text></g><text x="393" y="520" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer signed tx back to online node</text><line x1="75" y1="557" x2="710" y2="557" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="397.5" y="567" fill="#EDF2AE" stroke="#666" width="625" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="572" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Use ' Transaction &gt;&gt; Submit ' to send signed transaction to blockchain</tspan></text></g><g><rect x="577" y="615" fill="#EDF2AE" stroke="#666" width="266" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="620" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Register pool in hybrid mode</tspan></text></g><text x="393" y="693" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Repeat steps to sign and submit built pool registration transaction</text><line x1="75" y1="730" x2="710" y2="730" style="stroke-dasharray: 3px, 3px; fill: none;" class="messageLine1" stroke-width="2" stroke="none"></line><g><line x1="65" y1="663" x2="720" y2="663" class="loopLine"></line><line x1="720" y1="663" x2="720" y2="740" class="loopLine"></line><line x1="65" y1="740" x2="720" y2="740" class="loopLine"></line><line x1="65" y1="663" x2="65" y2="740" class="loopLine"></line><polygon points="65,663 115,663 115,676 106.6,683 65,683" class="labelBox"></polygon><text x="90" y="676" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="labelText">loop</text><text x="417.5" y="681" text-anchor="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="loopText"><tspan x="417.5"></tspan></text></g><g><rect x="431" y="750" fill="#EDF2AE" stroke="#666" width="558" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="755" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Verify that pool was successfully registered with ' Pool » Show '</tspan></text></g><g><rect x="0" y="808" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="75" y="840.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="75" dy="0">Offline</tspan></text></g><g><rect x="635" y="808" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="710" y="840.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="710" dy="0">Online</tspan></text></g></svg>
 
+
+
+## Step 6b. Transfer tools from online to offline
+
+We will zip the needed tools. 
+
+```
+mkdir -p /tmp/transfer/.cabal
+cp -r $CNODE_HOME/scripts /usr/local/bin/cardano-* ~/.bashrc /tmp/transfer
+cp -r ~/.cabal/bin /tmp/transfer/.cabal/
+tar -czvf transfer.tar.gz /tmp/transfer/
+```
+
+Using `scp` or `WinSCP` transfer the tar.gz file offline.
+
+Using scp:
+
+```
+scp -P <PORT_NUM> user@example.host.or.ip.com:/home/user/transfer.tar.gz .
+```
+
+With a USB, transfer to the air-gapped device.
+
+Once on the device, use the terminal to extract the files. Replace the .bashrc with the new one. 
+
+```
+mv ~/.bashrc ~/.bashrc_original
+cp ~/transfer/.bashrc ~
+```
+
+Make sure the .bashrc has the proper username, as the PATH variable set may be different.
+
+```
+sed -i 's/oldUserName/newUserName/g' INPUTFILE
+```
+
+Reset the enviroment
+
+```
+source ~/.bashrc
+```
+
+Add the cardano tools to the proper path
+
+```
+sudo cp ~/transfer/cardano-* /usr/local/bin
+```
+
+Confirm path / versions
+
+```
+cardano-cli version
+# cardano-cli 1.25.1 - linux-x86_64 - ghc-8.10
+# git rev 9a7331cce5e8bc0ea9c6bfa1c28773f4c5a7000f
+cardano-node version
+# cardano-node 1.25.1 - linux-x86_64 - ghc-8.10
+# git rev 9a7331cce5e8bc0ea9c6bfa1c28773f4c5a7000f
+```
+
+
 ## Step 7: Create the Pool
 
 ***THIS WILL BE ON THE OFFLINE DEVICE***
+
+
 
 Create the pool in CNTools. 
 
@@ -503,3 +565,5 @@ Step X - Securing Files
 - [Coin Cashew Guides](https://www.coincashew.com/coins/overview-ada/guide-how-to-build-a-haskell-stakepool-node)
 - [Alexd1985 Forum Post](https://forum.cardano.org/t/how-to-set-up-a-pool-in-a-few-minutes-and-register-using-cntools/48767)
 - [Tmux guide](https://linuxhandbook.com/tmux/)
+- [More bash scripts](https://github.com/gitmachtl/scripts)
+- [Cardano Latest topology / config files](https://hydra.iohk.io/job/Cardano/cardano-node/cardano-deployment/latest-finished/download/1/index.html)
