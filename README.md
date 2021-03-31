@@ -1,14 +1,26 @@
 # Cardano Recipe
 
+This guide is a collection of guides tailored to our specific situation. Their may be flaws in this setup, so please be dilligent in using these instructions. 
+
 ## Requirements
+
+- Block Producer
+  - 8GB RAM
+  - OS: Ubuntun 20.04 (LTS) x64
+- Relay1...RelayN
+  - 8GB RAM
+  - OS: Ubuntun 20.04 (LTS) x64
+- Offline Device
+  - TailsOS / Ubuntu 20.04 (LTS) x64USB
+  - Transfer USB
+- Funds:
+  - `rewards` wallet
+  - `pledge` wallet
+    - includes 500 ADA + fees for pool deposit
 
 ## Step 1a. Start block producer server
 
 Go to Digital Ocean. We are creating 2 droplets, one relay, one block producer. We will first start creating the block producer.
-
-OS: Ubuntun 20.04 (LTS) x64
-- Block Producer
-  - 8GB RAM
 
 Once the nodes are stared, update the server
 
@@ -22,6 +34,12 @@ Add a new user with a unique password. We suggest using a password manager to ge
 
 ```
 adduser cardano
+```
+
+Add user to `sudo` group to have proper privledges ot the system.
+
+```
+usermod -aG sudo cardano
 ```
 
 Add SSH keys to user .ssh file. This allows to use the same keys added via Digital Ocean
@@ -153,7 +171,7 @@ sudo systemctl restart fail2ban
 The standard UFW firewall can be used to control network access to your node.
 With any new installation, ufw is disabled by default. Enable it with the following settings.
 - Port 22 (or your random port #) TCP for SSH connection
-- Port 600 (or your random p2p port #) TCP for p2p traffic
+- Port 6000 (or your random p2p port #) TCP for p2p traffic
 
 
 A) *Run this on your Block Producer only:*
@@ -161,9 +179,9 @@ Only your Relay Node(s) should be permitted access to your Block Producer Node.
 
 
 ```
-ufw allow <22 or your random port number>/tcp
-ufw enable
-ufw status numbered
+sudo ufw allow <22 or your random port number>/tcp
+sudo ufw enable
+sudo ufw status numbered
 ```
 
 ```
@@ -176,10 +194,10 @@ B) *Run this on your Relay(s) only:*
 
 
 ```
-ufw allow <22 or your random port number>/tcp
-ufw allow <6000 or your random p2p port number>/tcp
-ufw enable
-ufw status numbered
+sudo ufw allow <22 or your random port number>/tcp
+sudo ufw allow <6000 or your random p2p port number>/tcp
+sudo ufw enable
+sudo ufw status numbered
 ```
 
 In order to protect your Relay Node(s) from a novel "DoS/Syn" attack, Michael Fazio created iptables entry which restricts connections to a given destination port to 5 connections from the same IP. 
@@ -187,7 +205,7 @@ In order to protect your Relay Node(s) from a novel "DoS/Syn" attack, Michael Fa
 Replace <RELAY NODE PORT> with your public relay port. Opitonally, you can replace the 5 with your preferred connection limit.
 
 ```
-iptables -I INPUT -p tcp -m tcp --dport <RELAY NODE PORT> --tcp-flags FIN,SYN,RST,ACK SYN -m connlimit --connlimit-above 5 --connlimit-mask 32 --connlimit-saddr -j REJECT --reject-with tcp-reset
+sudo iptables -I INPUT -p tcp -m tcp --dport <RELAY NODE PORT> --tcp-flags FIN,SYN,RST,ACK SYN -m connlimit --connlimit-above 5 --connlimit-mask 32 --connlimit-saddr -j REJECT --reject-with tcp-reset
 ```
 
 #### Verify Listening Ports
@@ -226,7 +244,7 @@ cd "$HOME/tmp"
 # sudo apt -y install curl # run this is curl is not installed.
 curl -sS -o prereqs.sh https://raw.githubusercontent.com/cardano-community/guild-operators/master/scripts/cnode-helper-scripts/prereqs.sh
 chmod 755 prereqs.sh
-./prereqs.sh
+./prereqs.sh -l # we will need the libsodium fork to bring offline.
 source "$HOME/.bashrc"
 ```
 
@@ -238,6 +256,14 @@ echo $CNODE_HOME
 ## Step 3a: Install cardano-node (with CNTools) 
 
 Once complete, we should have all the packages, we can build cardano-node, cardano-cli and more.
+
+Clone the cardano-node repo
+
+```
+cd "$HOME/git; # note that CNTools prereq script put this here
+git clone https://github.com/input-output-hk/cardano-node;
+cd cardano-node
+```
 
 ```
 git fetch --tags --all
@@ -282,39 +308,6 @@ POOL_NAME="GUILD"
 
 *POOL_NAME is the name of folder that you will use when registering pools and starting node in core mode. This folder would typically contain your hot.skey,vrf.skey and op.cert files required. If the mentioned files are absent, the node will automatically start in a passive mode.*
 
-Deploy as a systemd service
-
-```
-cd $CNODE_HOME/scripts
-./deploy-as-systemd.sh
-```
-
-*IMPORTANT to know when you run ./deploy-as-systemd.sh:*
-It will ask also to set the topologyupdater process as systemd and you will:
-
-- Producer: press NO for topologyUpdater
-- Relay: press YES for topologyUpdater, let the default timer for cnode auto restart to 86400
-
-
-Start the servcie
-
-```
-sudo systemctl enable cnode.service
-sudo systemctl start cnode.service
-```
-
-Check status 
-
-```
-sudo systemctl status cnode.service
-```
-
-Use gLiveView (Guild LiveView) to montior the pool that was started by systemd
-```
-cd $CNODE_HOME/scripts
-./gLiveView
-```
-
 ## Step 4: Modify Topology
 
 ### Producer
@@ -354,22 +347,6 @@ If you have more than one relay, it will look like this
 }
 ```
 
-Make sure the firewall is set properly.
-```
-sudo ufw status
-```
-
-Reset the node and wait a cfew minutes and confirm Peer info in gLiveView
-
-```
-cd $CNODE_HOME/scripts
-sudo systemctl restart cnode
-sudo systemctl status cnode
-./gLiveView.sh
-```
-
-Restart the node wait few minutes an check again with gliveview. The IP should appear in the Peers menu (press P)
-
 ### Relay
 
 The relay will connect to the Producer and dynamically with other public replays
@@ -384,13 +361,52 @@ To add more, it would like like this
 CUSTOM_PEERS="1.1.1.1:6000" 
 ```
 
-Add a rule in Relay FIREWALL to allow connections from all public Relay on port RELAY_PORT ( where RELAY_PORT is the CNODE PORT configured in env file)
+*If you haven't already*, add a rule in Relay FIREWALL to allow connections from all public Relay on port RELAY_PORT ( where RELAY_PORT is the CNODE PORT configured in env file):
 
 ```
 sudo ufw allow proto tcp from any to any port RELAY_PORT
 ```
 
-Restart the node wait few minutes an check again with gliveview. The IP should appear in the Peers menu (press P)
+Make sure the firewall is set properly on all nodes.
+```
+sudo ufw status
+```
+
+Deploy as a systemd service
+
+```
+cd $CNODE_HOME/scripts
+./deploy-as-systemd.sh
+```
+
+*IMPORTANT to know when you run ./deploy-as-systemd.sh:*
+It will ask also to set the topologyupdater process as systemd and you will:
+
+- Producer: press NO for topologyUpdater
+- Relay: press YES for topologyUpdater, let the default timer for cnode auto restart to 86400
+
+>Since the test network has to get along without the P2P network module for the time being, it needs static topology files. This “TopologyUpdater” service, which is far from being perfect due to its centralization factor, is intended to be a temporary solution to allow everyone to activate their relay nodes without having to postpone and wait for manual topology completion requests.
+
+Learn more at [CNTools Topology Update](https://cardano-community.github.io/guild-operators/#/Scripts/topologyupdater) page
+
+Start the servcie
+
+```
+sudo systemctl enable cnode.service
+sudo systemctl start cnode.service
+```
+
+Check status 
+
+```
+sudo systemctl status cnode.service
+```
+
+Use gLiveView (Guild LiveView) to montior the pool that was started by systemd
+```
+cd $CNODE_HOME/scripts
+./gLiveView
+```
 
 ## Step 5: Create Pool Meta Data on Github.
 
@@ -411,23 +427,76 @@ Once you have a RAW Url from Github, put it in [Git.io](https://git.io) to short
 
 
 
-## Step 6: Create/Import wallet and Register the Pool
+## Step 6a. Transfer tools from online to offline
 
-Following CNTools [Offline Work](https://cardano-community.github.io/guild-operators/#/Scripts/cntools?id=offline-workflow),, we will keep our keys save with a hybrid pool creation of our wallet(s) and 
-
-<svg id="mermaid-svg-0" width="100%" xmlns="http://www.w3.org/2000/svg" height="884" style="max-width: 1389px;" viewBox="-316.5 -10 1389 884"><style>#mermaid-svg-0{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-0 .error-icon{fill:#552222;}#mermaid-svg-0 .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-0 .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-0 .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-0 .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-0 .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-0 .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-0 .marker{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .marker.cross{stroke:#42B983;}#mermaid-svg-0 svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-0 .actor{stroke:hsl(78.1578947368,58.4615384615%,54.5098039216%);fill:#42B983;}#mermaid-svg-0 text.actor &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .actor-line{stroke:#42B983;}#mermaid-svg-0 .messageLine0{stroke-width:1.5;stroke-dasharray:none;stroke:#42B983;}#mermaid-svg-0 .messageLine1{stroke-width:1.5;stroke-dasharray:2,2;stroke:#42B983;}#mermaid-svg-0 #arrowhead path{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .sequenceNumber{fill:white;}#mermaid-svg-0 #sequencenumber{fill:#42B983;}#mermaid-svg-0 #crosshead path{fill:#42B983;stroke:#42B983;}#mermaid-svg-0 .messageText{fill:#d22778;stroke:#d22778;}#mermaid-svg-0 .labelBox{stroke:#326932;fill:#cde498;}#mermaid-svg-0 .labelText,#mermaid-svg-0 .labelText &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .loopText,#mermaid-svg-0 .loopText &gt; tspan{fill:#FFFFFF;stroke:none;}#mermaid-svg-0 .loopLine{stroke-width:2px;stroke-dasharray:2,2;stroke:#326932;fill:#326932;}#mermaid-svg-0 .note{stroke:#000000;fill:#fff5ad;}#mermaid-svg-0 .noteText,#mermaid-svg-0 .noteText &gt; tspan{fill:black;stroke:none;}#mermaid-svg-0 .activation0{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0 .activation1{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0 .activation2{fill:#f4f4f4;stroke:#666;}#mermaid-svg-0:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-0 sequence{fill:apa;}</style><g></g><g><line id="actor0" x1="75" y1="5" x2="75" y2="873" class="actor-line" stroke-width="0.5px" stroke="#999"></line><rect x="0" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="75" y="32.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="75" dy="0">Offline</tspan></text></g><g><line id="actor1" x1="710" y1="5" x2="710" y2="873" class="actor-line" stroke-width="0.5px" stroke="#999"></line><rect x="635" y="0" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="710" y="32.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="710" dy="0">Online</tspan></text></g><defs><marker id="arrowhead" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker></defs><defs><marker id="crosshead" markerWidth="15" markerHeight="8" orient="auto" refX="16" refY="4"><path fill="black" stroke="#000000" style="stroke-dasharray: 0px, 0px;" stroke-width="1px" d="M 9,2 V 6 L16,4 Z"></path><path fill="none" stroke="#000000" style="stroke-dasharray: 0px, 0px;" stroke-width="1px" d="M 0,1 L 6,7 M 6,1 L 0,7"></path></marker></defs><defs><marker id="filled-head" refX="18" refY="7" markerWidth="20" markerHeight="28" orient="auto"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="sequencenumber" refX="15" refY="15" markerWidth="60" markerHeight="40" orient="auto"><circle cx="15" cy="15" r="6"></circle></marker></defs><g><rect x="-30.5" y="75" fill="#EDF2AE" stroke="#666" width="211" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="80" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create/Import a wallet</tspan></text></g><g><rect x="-12.5" y="123" fill="#EDF2AE" stroke="#666" width="175" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="128" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create a new pool</tspan></text></g><g><rect x="-89" y="171" fill="#EDF2AE" stroke="#666" width="328" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="176" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Rotate KES keys to generate op.cert</tspan></text></g><g><rect x="-77" y="219" fill="#EDF2AE" stroke="#666" width="304" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="224" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Create a backup w/o private keys</tspan></text></g><text x="393" y="272" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer backup to online node</text><line x1="75" y1="309" x2="710" y2="309" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="501" y="319" fill="#EDF2AE" stroke="#666" width="418" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="324" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Fund the wallet base address with enough Ada</tspan></text></g><g><rect x="459.5" y="367" fill="#EDF2AE" stroke="#666" width="501" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="372" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Register wallet using ' Wallet » Register ' in hybrid mode</tspan></text></g><text x="393" y="420" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer built tx file back to offline node</text><line x1="710" y1="457" x2="75" y2="457" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="-266.5" y="467" fill="#EDF2AE" stroke="#666" width="683" height="38" rx="0" ry="0" class="note"></rect><text x="75" y="472" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="75">Use ' Transaction &gt;&gt; Sign ' with payment.skey from wallet to sign transaction</tspan></text></g><text x="393" y="520" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Transfer signed tx back to online node</text><line x1="75" y1="557" x2="710" y2="557" class="messageLine0" stroke-width="2" stroke="none" style="fill: none;" marker-end="url(#arrowhead)"></line><g><rect x="397.5" y="567" fill="#EDF2AE" stroke="#666" width="625" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="572" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Use ' Transaction &gt;&gt; Submit ' to send signed transaction to blockchain</tspan></text></g><g><rect x="577" y="615" fill="#EDF2AE" stroke="#666" width="266" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="620" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Register pool in hybrid mode</tspan></text></g><text x="393" y="693" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="messageText" dy="1em">Repeat steps to sign and submit built pool registration transaction</text><line x1="75" y1="730" x2="710" y2="730" style="stroke-dasharray: 3px, 3px; fill: none;" class="messageLine1" stroke-width="2" stroke="none"></line><g><line x1="65" y1="663" x2="720" y2="663" class="loopLine"></line><line x1="720" y1="663" x2="720" y2="740" class="loopLine"></line><line x1="65" y1="740" x2="720" y2="740" class="loopLine"></line><line x1="65" y1="663" x2="65" y2="740" class="loopLine"></line><polygon points="65,663 115,663 115,676 106.6,683 65,683" class="labelBox"></polygon><text x="90" y="676" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="labelText">loop</text><text x="417.5" y="681" text-anchor="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="loopText"><tspan x="417.5"></tspan></text></g><g><rect x="431" y="750" fill="#EDF2AE" stroke="#666" width="558" height="38" rx="0" ry="0" class="note"></rect><text x="710" y="755" text-anchor="middle" dominant-baseline="middle" alignment-baseline="middle" style="font-family: &quot;trebuchet ms&quot;, verdana, arial, sans-serif; font-weight: 400;" class="noteText" dy="1em"><tspan x="710">Verify that pool was successfully registered with ' Pool » Show '</tspan></text></g><g><rect x="0" y="808" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="75" y="840.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="75" dy="0">Offline</tspan></text></g><g><rect x="635" y="808" fill="#eaeaea" stroke="#666" width="150" height="65" rx="3" ry="3" class="actor"></rect><text x="710" y="840.5" style="text-anchor: middle; font-weight: 400; font-family: &quot;Open-Sans&quot;, &quot;sans-serif&quot;;" dominant-baseline="central" alignment-baseline="central" class="actor"><tspan x="710" dy="0">Online</tspan></text></g></svg>
-
-
-
-## Step 6b. Transfer tools from online to offline
-
-We will zip the needed tools. 
+We will zip the needed tools. It shoudld be the following:
+```
+~/.bashrc
+~/.cabal/
+~/.cabal/bin/
+~/.cabal/bin/db-analyser 
+~/.cabal/bin/cardano-address
+~/.cabal/bin/bech32
+~/.cabal/bin/cardano-node
+~/.cabal/bin/db-converter
+~/.cabal/bin/tracer-transfomers-example2
+~/.cabal/bin/cardano-node-chairman
+~/.cabal/bin/cardano-ping
+~/.cabal/bin/cardano-cli
+~/.cabal/bin/tracer-transfomers-example1
+~/.ghcup/
+$CNHOME/scripts/
+$CNHOME/scripts/stack-build.sh                    
+$CNHOME/scripts/sLiveView.sh                      
+$CNHOME/scripts/deploy-as-systemd.sh
+$CNHOME/scripts/system-info.sh
+$CNHOME/scripts/topologyUpdater.sh
+$CNHOME/scripts/logMonitor.sh                     
+$CNHOME/scripts/cntools.config                    
+$CNHOME/scripts/.env_branch                       
+$CNHOME/scripts/gLiveView.sh                      
+$CNHOME/scripts/cabal-build-all.sh
+$CNHOME/scripts/balance.sh                        
+$CNHOME/scripts/cncli.sh                          
+$CNHOME/scripts/cntools.library
+$CNHOME/scripts/setup_mon.sh                      
+$CNHOME/scripts/env                               
+$CNHOME/scripts/cnode.sh                          
+$CNHOME/scripts/sendADA.sh                        
+$CNHOME/scripts/createAddr.sh                     
+$CNHOME/scripts/itnRewards.sh                     
+$CNHOME/scripts/rotatePoolKeys.sh
+$CNHOME/scripts/cntools.sh           
+```
 
 ```
-mkdir -p /tmp/transfer/.cabal
-cp -r $CNODE_HOME/scripts /usr/local/bin/cardano-* ~/.bashrc /tmp/transfer
-cp -r ~/.cabal/bin /tmp/transfer/.cabal/
-tar -czvf transfer.tar.gz /tmp/transfer/
+cd "$HOME"
+mkdir -p ~/tmp/transfer/.cabal
+mkdir ~/tmp/transfer/.ghcup
+mkdir ~/tmp/lib
+cp -r $CNODE_HOME/scripts ~/.bashrc ~/tmp/transfer
+cp -r /usr/local/lib/libsodium* ~/tmp/transfer
+cp -r ~/.ghcup/env ~/tmp/transfer/.ghcup
+cp -r ~/.cabal/bin ~/tmp/transfer/.cabal
+mkdir -p ~/tmp/transfer/.cabal
+mkdir ~/tmp/transfer/.ghcup
+cp -r $CNODE_HOME/scripts ~/.bashrc ~/tmp/transfer
+cp -r /usr/local/lib/libsodium* ~/tmp/transfer/lib
+cp -r ~/.ghcup/env ~/tmp/transfer/.ghcup
+cp -r ~/.cabal/bin ~/tmp/transfer/.cabal
+```
+
+Confirm you have the right files. 
+
+```
+tree -a ~/tmp/transfer
+```
+
+Zip up the files
+
+```
+cd "$HOME"
+tar czvf transfer.tar.gz tmp/transfer
 ```
 
 Using `scp` or `WinSCP` transfer the tar.gz file offline.
@@ -435,34 +504,59 @@ Using `scp` or `WinSCP` transfer the tar.gz file offline.
 Using scp:
 
 ```
-scp -P <PORT_NUM> user@example.host.or.ip.com:/home/user/transfer.tar.gz .
+scp -P <PORT_NUM> user@example.host.or.ip.com:/home/cardano/transfer.tar.gz .
 ```
 
-With a USB, transfer to the air-gapped device.
+Then copy this file to a 2nd USB (not the one with the OS on it.). It is also suggested to have a copy of this README.md file to provide an easy way to copy the comments.
 
-Once on the device, use the terminal to extract the files. Replace the .bashrc with the new one. 
+With a USB, transfer to the air-gapped device. If using tails, make sure to have persistance and admin password enabled.
 
+Once on the device, copy or move the `transfer.tar.gz` to the home folder. Use the terminal to extract the files.  
+
+```
+tar xzvf transfer.tar.gz
+```
+
+It should now be in a folder here `~/tmp`. We can check with
+
+```
+ls -lah ~/tmp/transfer
+```
+
+Replace the .bashrc with the new one.
 ```
 mv ~/.bashrc ~/.bashrc_original
-cp ~/transfer/.bashrc ~
+cp ~/tmp/transfer/.bashrc .
 ```
 
-Make sure the .bashrc has the proper username, as the PATH variable set may be different.
+If needed, make sure the .bashrc has the proper username, as the PATH variable set may be different. 
 
 ```
-sed -i 's/oldUserName/newUserName/g' INPUTFILE
+vim ~/.bashrc
+```
+ 
+On the local machine, add the cardano tools to the proper path
+
+```
+mkdir -p /home/$USER/.cabal/
+cp -r ~/tmp/transfer/.cabal/bin /home/$USER/.cabal
+```
+
+Add libsodium and friends to the shared bin
+
+```
+sudo cp ~/tmp/transfer/lib/* /usr/local/lib/
+```
+
+Add GHC enviroment
+```
+cp -r ~/tmp/tranfser/.ghcup .
 ```
 
 Reset the enviroment
 
 ```
 source ~/.bashrc
-```
-
-Add the cardano tools to the proper path
-
-```
-sudo cp ~/transfer/cardano-* /usr/local/bin
 ```
 
 Confirm path / versions
@@ -477,11 +571,24 @@ cardano-node version
 ```
 
 
-## Step 7: Create the Pool
+## Step 6: Create / Import wallet 
+
+Go to [CNTools Offline Work](https://cardano-community.github.io/guild-operators/#/Scripts/cntools?id=offline-workflow) and see the diagram. we will keep our keys save with a hybrid pool creation of our wallet(s) and 
 
 ***THIS WILL BE ON THE OFFLINE DEVICE***
 
+On the offline device, use CNTools to either create or import 2 wallets. One will be called `pledge`, which will be our main pledge amount and 500 ADA for the pool deposit (yes, you can get the depsoit back). This will be kept offline, to safe guard our funds. The other one will be caled `rewards`. Clearly, to recieve the rewards for being a stake pool operator. We also want this one safe. 
 
+You may want to make backups of these keys, in the event that the USB / offline device dies randomly some how. This is very possible.
+
+We can create or import the wallet using `cntools.sh` once again. See CNTools for the example to [create a wallet](https://cardano-community.github.io/guild-operators/#/Scripts/cntools-common?id=create-wallet).
+
+*Note that if you’d like to use Import function to import a Daedalus/Yoroi based 15 or 24 word wallet seed, please ensure that you’ve rebuilt your cardano-node using instructions here or alternately ensure that cardano-address and bech32 are available in your $PATH environment variable.*
+
+
+## Step 7: Create the Pool
+
+***THIS WILL BE ON THE OFFLINE DEVICE***
 
 Create the pool in CNTools. 
 
@@ -494,14 +601,13 @@ In the menu, press P for pool. Then, press N for new pool. Type the name of the 
 
 Confirm the files are in `/opt/cardano/cnode/priv/pool/$POOL_NAME`
 
-## Step 8: Confirm / Send ADA To Wallets.
+Using the same `cntools.sh` script, create a backup of the pool so we can restore it to the Block Producer to register the pool on the mainnet.
 
-Using CNTools, make sure that `pledge` wallet has the pool depsoit and pledge amount.
-
+ 
 ## Step 9: Register the Pool
 
 Before this step, make sure you have the following:
-- [] Pledge amount + 500 + few ADA for fees in the wallet
+- [] Pledge wallet has PLEDGE_AMOUNT + 500 + few ADA for fees in the wallet; named `pledge`
 - [] Reward wallet with proper `rewards`
 - [] git.io short link with Pool Meta data
 
@@ -515,27 +621,26 @@ If you get the following, it was successful
 
 ![Example output](https://aws1.discourse-cdn.com/business4/uploads/cardano/original/3X/6/e/6e8e27c88768219d04bdad7849b9f98c16ade7dd.png)
 
-Here's the testnet example
+Here's the testnet example, of course, with poor formating
 
 ```
 INFO: press any key to cancel and return (won't stop transaction)                                                                            [145/1314]
                                                                            
 Pool test successfully registered!                                                                                                                     
 Owner #1      : pledge                                                     
-Reward Wallet :                                                                                                  
+Reward Wallet : reward                                                                                    
 Pledge        : 1 Ada                                                      
 Margin        : 7.5 %                                                      
 Cost          : 340 Ada                                                    
                                                                            
-Uncomment and set value for POOL_NAME in ./env with 'test'                 
-                                                                                                                                              
+Uncomment and set value for POOL_NAME in ./env with 'test'
+                                                                                                                       
 INFO: Total balance in 1 owner/pledge wallet(s) are: 2.434901 Ada    
 ```
 
-
-
 ## Step 10 Start Producer as an actually Producer
 
+If you haven't already, make sure the Producer has the proper POOL_NAME
 ```
 cd $CNODE_HOME/scripts
 vim env
@@ -547,14 +652,20 @@ Remove the # (comment) from the POOL_NAME and confirm it's name
 POOL_NAME="test" 
 ```
 
-Restart the node and confirm that it is in fact a CORE 
+Restart the node and confirm that it is in fact a CORE. It may take a little bit of time to sync for it to say "core". 
 
 *The CERTIFICATIONS and KES need to be rotated (once/ ~90 days); In order to do that you must go to: CNTOOLS - POOL - ROTATE; after this operation restart your Producer and now in gliveview you should see the new KES expiration date.*
 
-Step X - Securing Files
+***Congratulations. You have create a block producer on the Cardano blockchain***
 
-## Currect Problem: 
+## Future Steps
 
+- Setting up Monitoring (Prometheus + Grafana + Node Exporter)
+- Rotating the operation certs
+
+## Optional Steps
+
+- Setting up 2FA PAM module for SSHing into the servers
 
 ## Resource Credit 
 
