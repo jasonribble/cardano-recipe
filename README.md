@@ -507,7 +507,7 @@ Using scp:
 scp -P <PORT_NUM> user@example.host.or.ip.com:/home/cardano/transfer.tar.gz .
 ```
 
-Then copy this file to a 2nd USB (not the one with the OS on it.). It is also suggested to have a copy of this README.md file to provide an easy way to copy the comments.
+Then copy this file to a 2nd USB (not the one with the OS on it.). It is also suggested to have a copy of this README.md. It provides an easy way to copy the commands.
 
 With a USB, transfer to the air-gapped device. If using tails, make sure to have persistance and admin password enabled.
 
