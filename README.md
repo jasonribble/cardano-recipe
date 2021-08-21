@@ -260,7 +260,7 @@ Once complete, we should have all the packages, we can build cardano-node, carda
 Clone the cardano-node repo
 
 ```
-cd "$HOME/git; # note that CNTools prereq script put this here
+cd "$HOME/git"; # note that CNTools prereq script put this here
 git clone https://github.com/input-output-hk/cardano-node;
 cd cardano-node
 ```
